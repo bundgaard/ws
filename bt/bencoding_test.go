@@ -50,12 +50,20 @@ func TestTo(t *testing.T) {
 	})
 
 	t.Run("to B Dictionary", func(t *testing.T) {
-		expected := "d4:spaml1:a1:bee"
-		got := toBDict(map[string]interface{}{"spam": []interface{}{"a", "b"}})
-
-		if got != expected {
-			t.Errorf("expected %q. got %q", expected, got)
+		tests := []struct {
+			Input         map[string]interface{}
+			ExpectedValue string
+		}{
+			{map[string]interface{}{"spam": []interface{}{"a", "b"}}, "d4:spaml1:a1:bee"},
 		}
+
+		for _, test := range tests {
+			got := toBDict(test.Input)
+			if got != test.ExpectedValue {
+				t.Errorf("expected %q. got %q", test.ExpectedValue, got)
+			}
+		}
+
 	})
 }
 
@@ -119,20 +127,41 @@ func TestFrom(t *testing.T) {
 			}
 		}()
 		tests := []struct {
-			Input    string
-			Expected []interface{}
+			Input         string
+			ExpectedValue []interface{}
+			ExpectedSize  int
 		}{
-			{
-				"l4:spam4:eggse", []interface{}{"spam", "eggs"},
-			},
-			{"li3ei4ee", []interface{}{3, 4}},
+			{"l4:spam4:eggse", []interface{}{"spam", "eggs"}, 14},
+			{"li3ei4ee", []interface{}{3, 4}, 8},
 		}
 
 		for _, test := range tests {
-			got := fromBList(test.Input)
+			got, size := fromBList(test.Input)
 			t.Log(got)
-			if !reflect.DeepEqual(got, test.Expected) {
-				t.Errorf("exepcted %v got %q", test.Expected, got)
+			if !reflect.DeepEqual(got, test.ExpectedValue) {
+				t.Errorf("exepcted %v got %q", test.ExpectedValue, got)
+			}
+			if size != test.ExpectedSize {
+				t.Errorf("expected %d. got %d", test.ExpectedSize, size)
+			}
+		}
+	})
+
+	t.Run("From B Dictionary", func(t *testing.T) {
+		tests := []struct {
+			Input         string
+			ExpectedValue map[string]interface{}
+		}{
+			{"d4:spaml1:a1:bee", map[string]interface{}{"spam": []interface{}{"a", "b"}}},
+			{"d1:a2:be", map[string]interface{}{"a": "be"}},
+			{"d1:a2:be3:cow4:spame", map[string]interface{}{"a": "be", "cow": "spam"}},
+		}
+
+		for _, test := range tests {
+			got := fromBDict(test.Input)
+			t.Logf("got %v", got)
+			if !reflect.DeepEqual(got, test.ExpectedValue) {
+				t.Errorf("expected %q. got %q", test.ExpectedValue, got)
 			}
 		}
 	})

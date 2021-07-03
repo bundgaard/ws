@@ -2,7 +2,6 @@ package bt
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 )
@@ -22,7 +21,6 @@ func fromBString(b string) (string, int) {
 	nCollector := ""
 	for {
 		if cc == ':' {
-			println("finished collecting numbers")
 			break
 		}
 		if cc >= '0' && cc <= '9' {
@@ -52,8 +50,7 @@ func fromBString(b string) (string, int) {
 
 	// return
 	size := len(fmt.Sprintf("%d:%s", nn, sCollector))
-	log.Println("returning", sCollector, size)
-	return sCollector, len(fmt.Sprintf("%d:%s", nn, sCollector))
+	return sCollector, size
 }
 
 // Integers are represented by an 'i' and followed by the number in base 10 followed by an 'e'
@@ -86,8 +83,7 @@ func fromBInteger(b string) (int, int) {
 	if err != nil {
 		panic(err)
 	}
-	// returning
-	log.Println("returning ", n, len(b))
+
 	return n, len(fmt.Sprintf("i%de", n))
 }
 
@@ -108,7 +104,7 @@ func toBList(args ...interface{}) string {
 	return out.String()
 }
 
-func fromBList(b string) []interface{} {
+func fromBList(b string) ([]interface{}, int) {
 	result := make([]interface{}, 0)
 
 	idx := 0
@@ -138,9 +134,17 @@ func fromBList(b string) []interface{} {
 		cc = b[idx]
 	}
 
-	return result
+	return result, len(b)
 }
 
+/*
+Dictionaries are encoded as a 'd' followed by a list of alternating keys
+and their corresponding values followed by an 'e'.
+
+For example, d3:cow3:moo4:spam4:eggse corresponds to {'cow': 'moo', 'spam': 'eggs'}
+and d4:spaml1:a1:bee corresponds to {'spam': ['a', 'b']} .
+Keys must be strings and appear in sorted order (sorted as raw strings, not alphanumerics).
+*/
 func toBDict(m map[string]interface{}) string {
 	var out strings.Builder
 
@@ -162,4 +166,54 @@ func toBDict(m map[string]interface{}) string {
 
 	out.WriteRune('e')
 	return out.String()
+}
+
+/*
+Dictionaries are encoded as a 'd' followed by a list of alternating keys
+and their corresponding values followed by an 'e'.
+
+For example, d3:cow3:moo4:spam4:eggse corresponds to {'cow': 'moo', 'spam': 'eggs'}
+and d4:spaml1:a1:bee corresponds to {'spam': ['a', 'b']} .
+Keys must be strings and appear in sorted order (sorted as raw strings, not alphanumerics).
+*/
+func fromBDict(b string) map[string]interface{} {
+	fmt.Printf("DICT %s %d\n", b, len(b))
+	result := make(map[string]interface{})
+	idx := 0
+	cc := b[idx]
+
+	if cc != 'd' || b[len(b)-1] != 'e' {
+		panic("not a bencoded dictionary")
+	}
+
+	idx++ // consume 'd'
+
+	// find first key
+
+	for {
+		if idx >= len(b)-1 {
+			break
+		}
+
+		key, size := fromBString(b[idx:])
+		idx += size
+		cc = b[idx]
+		// find first key
+		if cc == 'i' {
+			val, size := fromBInteger(b[idx:])
+			idx += size
+			result[key] = val
+		} else if cc >= '0' && cc <= '9' {
+			val, size := fromBString(b[idx:])
+			idx += size
+			result[key] = val
+		} else if cc == 'l' {
+			val, size := fromBList(b[idx:])
+			idx += size // we need to stay on l..e
+			result[key] = val
+		}
+
+	}
+
+	return result
 }
