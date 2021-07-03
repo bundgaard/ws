@@ -2,6 +2,7 @@ package bt
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -11,7 +12,8 @@ func toBString(t string) string {
 	return fmt.Sprintf("%d:%s", len(t), t)
 }
 
-func fromBString(b string) string {
+// wil take incoming bencoded string 4:spam and return spam and the total length
+func fromBString(b string) (string, int) {
 
 	// split on :
 	idx := 0
@@ -49,8 +51,9 @@ func fromBString(b string) string {
 	// verify length
 
 	// return
-
-	return sCollector
+	size := len(fmt.Sprintf("%d:%s", nn, sCollector))
+	log.Println("returning", sCollector, size)
+	return sCollector, len(fmt.Sprintf("%d:%s", nn, sCollector))
 }
 
 // Integers are represented by an 'i' and followed by the number in base 10 followed by an 'e'
@@ -59,7 +62,7 @@ func toBInteger(n int) string {
 	return fmt.Sprintf("i%de", n)
 }
 
-func fromBInteger(b string) int {
+func fromBInteger(b string) (int, int) {
 	idx := 0
 	cc := b[idx]
 	if cc != 'i' || b[len(b)-1] != 'e' {
@@ -83,7 +86,9 @@ func fromBInteger(b string) int {
 	if err != nil {
 		panic(err)
 	}
-	return n
+	// returning
+	log.Println("returning ", n, len(b))
+	return n, len(fmt.Sprintf("i%de", n))
 }
 
 func toBList(args ...interface{}) string {
@@ -119,14 +124,14 @@ func fromBList(b string) []interface{} {
 
 		if cc == 'i' {
 
-			bInteger := fromBInteger(b[idx:])
+			bInteger, size := fromBInteger(b[idx:])
 
 			result = append(result, bInteger)
-			advance = len(fmt.Sprintf("i%de", bInteger))
+			advance = size
 			// idx += advance
 		} else if cc >= '0' && cc <= '9' {
-			t := fromBString(b[idx:])
-			advance = len(fmt.Sprintf("%d:%s", len(t), t)) // TODO: make the function output both or the size
+			t, size := fromBString(b[idx:])
+			advance = size
 			result = append(result, t)
 		}
 		idx += advance

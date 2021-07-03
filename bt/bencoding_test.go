@@ -64,18 +64,22 @@ func TestFrom(t *testing.T) {
 	t.Run("From B String", func(t *testing.T) {
 
 		tests := []struct {
-			Input     string
-			Expected  string
-			wantPanic bool
+			Input          string
+			ExpectedString string
+			ExpectedSize   int
+			wantPanic      bool
 		}{
-			{"4:spam", "spam", false},
-			{"8:dinosaur", "dinosaur", false},
-			{"9:spam spam", "spam spam", false},
+			{"4:spam", "spam", 6, false},
+			{"8:dinosaur", "dinosaur", 10, false},
+			{"9:spam spam", "spam spam", 11, false},
 		}
 		for _, test := range tests {
-			got := fromBString(test.Input)
-			if test.Expected != got {
-				t.Errorf("expected %q. got %q", test.Expected, got)
+			got, size := fromBString(test.Input)
+			if test.ExpectedString != got {
+				t.Errorf("expected %q. got %q", test.ExpectedString, got)
+			}
+			if test.ExpectedSize != size {
+				t.Errorf("expected %d. got %d", test.ExpectedSize, size)
 			}
 		}
 
@@ -88,18 +92,22 @@ func TestFrom(t *testing.T) {
 			}
 		}()
 		tests := []struct {
-			Input    string
-			Expected int
+			Input        string
+			ExpectedInt  int
+			ExpectedSize int
 		}{
-			{"i3e", 3},
-			{"i0e", 0},
-			{"i100e", 100},
+			{"i3e", 3, 3},
+			{"i0e", 0, 3},
+			{"i100e", 100, 5},
 		}
 
 		for _, test := range tests {
-			got := fromBInteger(test.Input)
-			if got != test.Expected {
-				t.Errorf("expected %q. got %q", test.Expected, got)
+			got, size := fromBInteger(test.Input)
+			if got != test.ExpectedInt {
+				t.Errorf("expected %q. got %q", test.ExpectedInt, got)
+			}
+			if test.ExpectedSize != size {
+				t.Errorf("expected %d. got %d", test.ExpectedSize, size)
 			}
 		}
 	})
