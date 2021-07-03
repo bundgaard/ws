@@ -155,6 +155,7 @@ func TestFrom(t *testing.T) {
 			{"d4:spaml1:a1:bee", map[string]interface{}{"spam": []interface{}{"a", "b"}}},
 			{"d1:a2:be", map[string]interface{}{"a": "be"}},
 			{"d1:a2:be3:cow4:spame", map[string]interface{}{"a": "be", "cow": "spam"}},
+			{"d1:ai10ee", map[string]interface{}{"a": 10}},
 		}
 
 		for _, test := range tests {
